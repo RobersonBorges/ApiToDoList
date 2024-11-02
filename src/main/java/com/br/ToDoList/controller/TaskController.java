@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/tasks")
@@ -25,10 +26,7 @@ public class TaskController {
     @Autowired
     private TaskService taskService;
 
-    @GetMapping
-    public List<Task> getTaskList() {
-        return taskService.getAllTasks();
-    }
+    @GetMapping public List<TaskDTO> getTaskList() { List<Task> tasks = taskService.getAllTasks(); return tasks.stream().map(taskService::convertToDTO).collect(Collectors.toList()); }
 
     @GetMapping("/{codTask}")
     public ResponseEntity<TaskDTO> getTaskById(@PathVariable Long codTask) {

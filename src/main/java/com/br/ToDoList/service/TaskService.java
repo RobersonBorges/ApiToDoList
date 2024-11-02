@@ -1,5 +1,6 @@
 package com.br.ToDoList.service;
 
+import com.br.ToDoList.dto.CategoryDTO;
 import com.br.ToDoList.dto.JustificationDTO;
 import com.br.ToDoList.dto.TaskDTO;
 import com.br.ToDoList.enums.EnumTaskStatus;
@@ -18,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -28,7 +30,8 @@ public class TaskService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @Autowired private JustificationRepository justificationRepository;
+    @Autowired
+    private JustificationRepository justificationRepository;
 
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
@@ -46,17 +49,10 @@ public class TaskService {
     }
 
     public TaskDTO updateTask(Long codTask, TaskDTO taskDTO) {
-
         Task task = taskRepository.findById(codTask).orElseThrow(() -> new ConfigDataResourceNotFoundException("Task not found"));
-
-        BeanUtils.copyProperties(taskDTO, task, "codTask", "categories", "justifications");
-
         preencherLstCategories(taskDTO, task);
-
         processPendingStatus(taskDTO, task);
-
         Task updatedTask = taskRepository.save(task);
-
         return convertToDTO(updatedTask);
     }
 
@@ -66,11 +62,11 @@ public class TaskService {
     }
 
     private void preencherLstCategories(TaskDTO taskDTO, Task task) {
-        if (Boolean.FALSE.equals(CollectionUtils.isEmpty(taskDTO.getCategoryIds()))) {
+        if (Boolean.FALSE.equals(CollectionUtils.isEmpty(taskDTO.getCategories()))) {
             Set<Category> categories = new HashSet<>();
-            for (Long categoryId : taskDTO.getCategoryIds()) {
-                Category categoryEntity = categoryRepository.findById(categoryId)
-                        .orElseThrow(() -> new ConfigDataResourceNotFoundException("Categoria não encontrada"));
+            for (CategoryDTO categoryDTO : taskDTO.getCategories()) {
+                Category categoryEntity = categoryRepository.findById(categoryDTO.getCodCategory())
+                        .orElseThrow(() -> new ConfigDataResourceNotFoundException("Category not found"));
                 categories.add(categoryEntity);
             }
             task.setCategories(categories);
@@ -92,15 +88,12 @@ public class TaskService {
         }
     }
 
-
-
-    private TaskDTO convertToDTO(Task task) {
+    public TaskDTO convertToDTO(Task task) {
         TaskDTO taskDTO = new TaskDTO();
         taskDTO.setCodTask(task.getCodTask());
         taskDTO.setTitle(task.getTitle());
         taskDTO.setDescription(task.getDescription());
         taskDTO.setEnumStatus(task.getEnumStatus());
-
         Set<JustificationDTO> justificationDTOs = new HashSet<>();
         for (Justification justification : task.getJustifications()) {
             JustificationDTO justificationDTO = new JustificationDTO();
@@ -111,8 +104,16 @@ public class TaskService {
         }
         taskDTO.setJustifications(justificationDTOs);
 
+        Set<CategoryDTO> categoryDTOs = task.getCategories().stream().map(category -> {
+            CategoryDTO dto = new CategoryDTO();
+            dto.setCodCategory(category.getCodCategory());
+            dto.setNameCategory(category.getNameCategory());
+            return dto;
+        }).collect(Collectors.toSet());
+        taskDTO.setCategories(categoryDTOs);
         return taskDTO;
     }
+
 
     private Task convertToEntity(TaskDTO taskDTO) {
         Task task = new Task();
