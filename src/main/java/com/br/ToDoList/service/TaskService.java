@@ -11,7 +11,6 @@ import com.br.ToDoList.models.Task;
 import com.br.ToDoList.repository.CategoryRepository;
 import com.br.ToDoList.repository.JustificationRepository;
 import com.br.ToDoList.repository.TaskRepository;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -43,6 +42,7 @@ public class TaskService {
     }
 
     public TaskDTO createTask(TaskDTO taskDTO) {
+        validateTaskDto(taskDTO);
         Task task = convertToEntity(taskDTO);
         Task savedTask = taskRepository.save(task);
         return convertToDTO(savedTask);
@@ -52,6 +52,11 @@ public class TaskService {
         Task task = taskRepository.findById(codTask).orElseThrow(() -> new ConfigDataResourceNotFoundException("Task not found"));
         preencherLstCategories(taskDTO, task);
         processPendingStatus(taskDTO, task);
+
+        if(taskDTO.getEnumStatus() != null){
+            task.setEnumStatus(taskDTO.getEnumStatus());
+        }
+
         Task updatedTask = taskRepository.save(task);
         return convertToDTO(updatedTask);
     }
@@ -132,5 +137,14 @@ public class TaskService {
             task.setJustifications(justifications);
         }
         return task;
+    }
+
+    private void validateTaskDto(TaskDTO taskDTO){
+        if (taskDTO.getTitle() == null){
+            throw new IllegalArgumentException("Title is required.");
+        }
+        if(taskDTO.getEnumStatus() == null){
+            throw new IllegalArgumentException("Status is required.");
+        }
     }
 }

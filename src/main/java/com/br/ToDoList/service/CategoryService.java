@@ -15,17 +15,13 @@ public class CategoryService {
     private CategoryRepository categoryRepository;
 
     public ResponseEntity<?> createCategory(Category category) {
-        if (categoryRepository.existsByNameCategory(category.getNameCategory())) {
-            return new ResponseEntity<>("Categoria já existe!", HttpStatus.BAD_REQUEST);
-        }
+        validateCategory(category);
         Category newCategory = categoryRepository.save(category);
         return new ResponseEntity<>(newCategory, HttpStatus.CREATED);
     }
 
     public ResponseEntity<?> updateCategory(Long id, Category categoryDetails) {
-        if (categoryRepository.existsByNameCategory(categoryDetails.getNameCategory())) {
-            return new ResponseEntity<>("Categoria já existe!", HttpStatus.BAD_REQUEST);
-        }
+        validateCategory(categoryDetails);
         Category category = categoryRepository.findById(id).orElseThrow(() -> new ConfigDataResourceNotFoundException("Categoria não encontrada"));
         category.setNameCategory(categoryDetails.getNameCategory());
         Category updatedCategory = categoryRepository.save(category);
@@ -36,6 +32,15 @@ public class CategoryService {
         Category category = categoryRepository.findById(id).orElseThrow(() -> new ConfigDataResourceNotFoundException("Categoria não encontrada"));
         categoryRepository.delete(category);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    private void validateCategory(Category category){
+        if(category.getNameCategory() == null){
+            throw new IllegalArgumentException("Category name is required.");
+        }
+        if (categoryRepository.existsByNameCategory(category.getNameCategory())) {
+            throw new IllegalArgumentException("Category already exist.");
+        }
     }
 
 }

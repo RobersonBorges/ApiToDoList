@@ -10,6 +10,7 @@ import java.util.Set;
 @Setter
 public class TaskDTO {
     private Long codTask;
+
     private String title;
     private String description;
     private EnumTaskStatus enumStatus;
