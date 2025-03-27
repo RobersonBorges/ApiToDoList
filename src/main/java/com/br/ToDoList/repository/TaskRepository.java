@@ -9,5 +9,7 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Justification> findByCodTask(Long codTask);
 
-    }
+    List<Task> findByCategoriesCodCategory(Long codCategory);
+
+}
 
